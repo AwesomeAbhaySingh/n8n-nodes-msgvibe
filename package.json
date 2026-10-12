@@ -1,0 +1,56 @@
+{
+	"name": "n8n-nodes-msgvibe",
+	"version": "0.1.0",
+	"description": "n8n nodes for MsgVibe: create personalized branded videos with tracked pages, and start workflows when a video is ready, viewed or clicked.",
+	"license": "MIT",
+	"homepage": "https://www.msgvibe.com/integrations/n8n",
+	"keywords": [
+		"n8n-community-node-package",
+		"msgvibe",
+		"video",
+		"personalized video",
+		"video automation",
+		"marketing"
+	],
+	"author": {
+		"name": "MsgVibe",
+		"email": "support@msgvibe.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/AwesomeAbhaySingh/n8n-nodes-msgvibe.git"
+	},
+	"scripts": {
+		"build": "n8n-node build",
+		"build:watch": "tsc --watch",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/MsgVibeApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/MsgVibe/MsgVibe.node.js",
+			"dist/nodes/MsgVibe/MsgVibeTrigger.node.js"
+		]
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "*",
+		"eslint": "9.39.4",
+		"prettier": "3.8.3",
+		"release-it": "20.2.0",
+		"typescript": "5.9.3"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}
