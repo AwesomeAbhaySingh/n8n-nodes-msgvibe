@@ -13,6 +13,29 @@ import { msgVibeApiRequest } from './transport';
 
 const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
 
+/** Song URL (library or own MP3), or no music at all; left out = the design's own song. */
+function addMusic(body: IDataObject, extra: IDataObject) {
+	if (extra.music === false) body.music = false;
+	else if (text(extra.songUrl)) body.music = { src: text(extra.songUrl) };
+}
+
+/** The request body for a photo reel: photos cut on the beat of a trending song, with a few words. */
+function reelBody(photos: string[], style: string, hook: string, extra: IDataObject): IDataObject {
+	const reel: IDataObject = { style, photos };
+	if (hook) reel.hook = hook;
+	if (text(extra.smallLine)) reel.sub = text(extra.smallLine);
+	const lines = text(extra.photoCaptions)
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
+	if (lines.length) reel.lines = lines.slice(0, 10);
+	const body: IDataObject = { reel, aspectRatio: '9:16' };
+	addMusic(body, extra);
+	const reference = text(extra.reference);
+	if (reference) body.externalId = reference.replace(/[^\w.:@/#-]/g, '-').slice(0, 128);
+	return body;
+}
+
 /** The request body for POST /videos, built from the node's fields. Empty fields are left out. */
 function videoBody(
 	design: string,
@@ -44,6 +67,9 @@ function videoBody(
 	}
 
 	if (extra.qrCode === true && link) body.qr = { url: link, label: 'Scan me' };
+	if (extra.captions === true) body.captions = true;
+	if (text(extra.motionStyle)) body.motionStyle = text(extra.motionStyle);
+	addMusic(body, extra);
 
 	const reference = text(extra.reference);
 	if (reference) body.externalId = reference.replace(/[^\w.:@/#-]/g, '-').slice(0, 128);
@@ -115,6 +141,13 @@ export class MsgVibe implements INodeType {
 						value: 'create',
 						description: 'Make a branded video for one person or product (uses 1 credit)',
 						action: 'Create a personal video',
+					},
+					{
+						name: 'Create Reel',
+						value: 'createReel',
+						description:
+							'Make a reel from 1 to 10 photos, cut on the beat of a trending song (uses 1 credit)',
+						action: 'Create a photo reel',
 					},
 					{
 						name: 'Get',
@@ -212,6 +245,14 @@ export class MsgVibe implements INodeType {
 						description: 'The call to action in the video and on its page',
 					},
 					{
+						displayName: 'Captions',
+						name: 'captions',
+						type: 'boolean',
+						default: false,
+						description:
+							'Whether to show big on-screen captions written from your text (most people watch without sound)',
+					},
+					{
 						displayName: 'Currency',
 						name: 'currency',
 						type: 'options',
@@ -224,6 +265,35 @@ export class MsgVibe implements INodeType {
 							{ name: 'USD', value: 'USD' },
 						],
 						default: 'USD',
+					},
+					{
+						displayName: 'Motion Style',
+						name: 'motionStyle',
+						type: 'options',
+						options: [
+							{ name: 'Brush', value: 'brush' },
+							{ name: 'Collage', value: 'collage' },
+							{ name: 'Design Default', value: '' },
+							{ name: 'Doodle', value: 'doodle' },
+							{ name: 'Geometric', value: 'geo' },
+							{ name: 'Glitch', value: 'glitch' },
+							{ name: 'Kinetic', value: 'kinetic' },
+							{ name: 'Liquid', value: 'liquid' },
+							{ name: 'One Take', value: 'onetake' },
+							{ name: 'Pop', value: 'pop' },
+							{ name: 'Story', value: 'story' },
+							{ name: 'Swiss Minimal', value: 'swiss' },
+							{ name: 'Trailer', value: 'trailer' },
+						],
+						default: '',
+						description: 'Animate the same content in another style',
+					},
+					{
+						displayName: 'Music',
+						name: 'music',
+						type: 'boolean',
+						default: true,
+						description: 'Whether the video plays music. Turn off for a silent video.',
 					},
 					{
 						displayName: 'Offer Line',
@@ -317,12 +387,157 @@ export class MsgVibe implements INodeType {
 						default: '9:16',
 					},
 					{
+						displayName: 'Song URL',
+						name: 'songUrl',
+						type: 'string',
+						default: '',
+						placeholder: 'e.g. https://www.msgvibe.com/music/phonk-drive.mp3',
+						description:
+							'A song from the <a href="https://www.msgvibe.com/developers#music">MsgVibe music library</a> or your own https MP3. Empty: the design’s own song.',
+					},
+					{
 						displayName: 'Tracked Page',
 						name: 'trackedPage',
 						type: 'boolean',
 						default: true,
 						description:
 							'Whether the video gets its own page with the button. Views and clicks on it start the MsgVibe Trigger.',
+					},
+				],
+			},
+
+			// ── video: create reel ──
+			{
+				displayName: 'Photo URLs',
+				name: 'photos',
+				type: 'string',
+				typeOptions: {
+					rows: 4,
+				},
+				required: true,
+				default: '',
+				placeholder: 'https://example.com/photo-1.jpg',
+				description: 'One to ten public https photo links, one per line (or separated by commas)',
+				displayOptions: {
+					show: {
+						resource: ['video'],
+						operation: ['createReel'],
+					},
+				},
+			},
+			{
+				displayName: 'Reel Style',
+				name: 'reelStyle',
+				type: 'options',
+				options: [
+					{ name: 'Beam', value: 'beam' },
+					{ name: 'Burn', value: 'burn' },
+					{ name: 'Cine', value: 'cine' },
+					{ name: 'Confetti', value: 'confetti' },
+					{ name: 'Cube (3D)', value: 'cube' },
+					{ name: 'Day in My Life', value: 'day' },
+					{ name: 'Disco', value: 'disco' },
+					{ name: 'Dreamy', value: 'dreamy' },
+					{ name: 'Ember', value: 'ember' },
+					{ name: 'Fireworks', value: 'fireworks' },
+					{ name: 'Flash', value: 'flash' },
+					{ name: 'Fly Through (3D)', value: 'fly' },
+					{ name: 'Gallery (3D)', value: 'gallery' },
+					{ name: 'Glam', value: 'glam' },
+					{ name: 'Ice', value: 'ice' },
+					{ name: 'Impact', value: 'impact' },
+					{ name: 'Love', value: 'love' },
+					{ name: 'Magazine', value: 'mag' },
+					{ name: 'Mirror', value: 'mirror' },
+					{ name: 'Neon', value: 'neon' },
+					{ name: 'Orbit (3D)', value: 'orbit' },
+					{ name: 'Photo Dump', value: 'dump' },
+					{ name: 'Polaroid', value: 'polaroid' },
+					{ name: 'Pop Art', value: 'pop' },
+					{ name: 'Pulse', value: 'pulse' },
+					{ name: 'Retro', value: 'retro' },
+					{ name: 'Runway', value: 'runway' },
+					{ name: 'Sizzle', value: 'sizzle' },
+					{ name: 'Sparkle', value: 'sparkle' },
+					{ name: 'Split Screen', value: 'split' },
+					{ name: 'Swirl', value: 'swirl' },
+					{ name: 'Whip', value: 'whip' },
+				],
+				default: 'ember',
+				description: 'How the photos move and cut. Each style has its own trending song. See them at https://www.msgvibe.com/creators.',
+				displayOptions: {
+					show: {
+						resource: ['video'],
+						operation: ['createReel'],
+					},
+				},
+			},
+			{
+				displayName: 'Opening Words',
+				name: 'hook',
+				type: 'string',
+				default: '',
+				placeholder: 'e.g. Goa in 4 days',
+				description: 'The big words at the start, up to 48 characters',
+				displayOptions: {
+					show: {
+						resource: ['video'],
+						operation: ['createReel'],
+					},
+				},
+			},
+			{
+				displayName: 'Additional Fields',
+				name: 'reelFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				default: {},
+				displayOptions: {
+					show: {
+						resource: ['video'],
+						operation: ['createReel'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Music',
+						name: 'music',
+						type: 'boolean',
+						default: true,
+						description: 'Whether the reel plays music. Turn off for a silent reel.',
+					},
+					{
+						displayName: 'Photo Captions',
+						name: 'photoCaptions',
+						type: 'string',
+						typeOptions: {
+							rows: 4,
+						},
+						default: '',
+						description: 'One short line per photo, in photo order, one per line (up to 28 characters each)',
+					},
+					{
+						displayName: 'Reference',
+						name: 'reference',
+						type: 'string',
+						default: '',
+						description: 'Your own reference, e.g. a creator or post ID. It comes back with the video.',
+					},
+					{
+						displayName: 'Small Line',
+						name: 'smallLine',
+						type: 'string',
+						default: '',
+						description: 'A small line with the opening words, up to 40 characters',
+					},
+					{
+						displayName: 'Song URL',
+						name: 'songUrl',
+						type: 'string',
+						default: '',
+						placeholder: 'e.g. https://www.msgvibe.com/music/phonk-drive.mp3',
+						description:
+							'A song from the <a href="https://www.msgvibe.com/developers#music">MsgVibe music library</a> or your own https MP3. Empty: the style’s own trending song.',
 					},
 				],
 			},
@@ -445,6 +660,27 @@ export class MsgVibe implements INodeType {
 						this.getNodeParameter('additionalFields', i, {}) as IDataObject,
 					);
 					// A retry of the same execution and item returns the first video instead of charging again.
+					const idempotencyKey = `n8n-${this.getWorkflow().id ?? 'wf'}-${this.getExecutionId() ?? Date.now()}-${i}`;
+					const response = await msgVibeApiRequest.call(this, 'POST', '/videos', body, undefined, {
+						'Idempotency-Key': idempotencyKey.slice(0, 100),
+					});
+					results = [response.video as IDataObject];
+				} else if (operation === 'createReel') {
+					const photos = text(this.getNodeParameter('photos', i))
+						.split(/[\s,]+/)
+						.filter((url) => /^https?:\/\//i.test(url));
+					if (!photos.length) {
+						throw new NodeOperationError(this.getNode(), 'No photo links', {
+							itemIndex: i,
+							description: 'Enter 1 to 10 public https photo links, one per line.',
+						});
+					}
+					const body = reelBody(
+						photos.slice(0, 10),
+						this.getNodeParameter('reelStyle', i) as string,
+						text(this.getNodeParameter('hook', i, '')),
+						this.getNodeParameter('reelFields', i, {}) as IDataObject,
+					);
 					const idempotencyKey = `n8n-${this.getWorkflow().id ?? 'wf'}-${this.getExecutionId() ?? Date.now()}-${i}`;
 					const response = await msgVibeApiRequest.call(this, 'POST', '/videos', body, undefined, {
 						'Idempotency-Key': idempotencyKey.slice(0, 100),

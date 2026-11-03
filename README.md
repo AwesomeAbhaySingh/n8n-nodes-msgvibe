@@ -30,6 +30,7 @@ n8n tests the key against `GET /v1/account` when you save it.
 | Operation | What it does |
 | --- | --- |
 | **Video → Create** | Makes a branded video for one person or product. Uses 1 credit; a failed video is refunded. |
+| **Video → Create Reel** | Makes a reel from 1 to 10 photos, cut on the beat of a trending song. Uses 1 credit. |
 | **Video → Get** | Returns the status, MP4 link and page link of one video. |
 | **Video → Get Many** | Lists your videos, newest first, optionally by status. |
 
@@ -47,7 +48,22 @@ Fields of **Create**:
 | Tracked Page | On by default: the video gets its own page that counts views and clicks. |
 | QR Code at the End | Adds a QR code to the button link on the last scene. |
 | Size | 9:16, 4:5, 1:1 or 16:9. |
+| Song URL | A song from the [MsgVibe music library](https://www.msgvibe.com/developers#music) (copy its URL) or your own https MP3. Empty: the design's own song. |
+| Music | On by default. Turn off for a silent video. |
+| Captions | Big on-screen captions written from your text. |
+| Motion Style | Animate the same content in another style (Kinetic, Glitch, Trailer, Doodle…). |
 | Reference | Your own ID (order or lead number), returned as `externalId`. |
+
+Fields of **Create Reel**:
+
+| Field | Notes |
+| --- | --- |
+| Photo URLs | 1 to 10 public https photo links, one per line or separated by commas. |
+| Reel Style | 32 styles (Photo Dump, Ember, Whip, Glam, Fly Through 3D…). Each has its own trending song. See them at [msgvibe.com/creators](https://www.msgvibe.com/creators). |
+| Opening Words | The big words at the start, e.g. `Goa in 4 days`. |
+| Small Line, Photo Captions | Optional. One caption per photo, one per line. |
+| Song URL, Music | Another song from the library, or no music. |
+| Reference | Your own ID, returned as `externalId`. |
 
 Create returns at once with the video `id` and the status `queued`. Rendering takes about a minute. Use the trigger below to continue when the video is ready.
 
