@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Create Reel: Opening Words moved into Additional Fields (it is optional).
+
 ## 0.2.0
 
 - New operation **Video → Create Reel**: a reel from 1 to 10 photos, cut on the beat of a trending song (32 styles).

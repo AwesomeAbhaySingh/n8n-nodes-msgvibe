@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-msgvibe",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "n8n nodes for MsgVibe: create personalized branded videos with tracked pages, and start workflows when a video is ready, viewed or clicked.",
 	"license": "MIT",
 	"homepage": "https://www.msgvibe.com/integrations/n8n",

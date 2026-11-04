@@ -60,8 +60,13 @@ Fields of **Create Reel**:
 | --- | --- |
 | Photo URLs | 1 to 10 public https photo links, one per line or separated by commas. |
 | Reel Style | 32 styles (Photo Dump, Ember, Whip, Glam, Fly Through 3D…). Each has its own trending song. See them at [msgvibe.com/creators](https://www.msgvibe.com/creators). |
+
+Optional, under **Additional Fields**:
+
+| Field | Notes |
+| --- | --- |
 | Opening Words | The big words at the start, e.g. `Goa in 4 days`. |
-| Small Line, Photo Captions | Optional. One caption per photo, one per line. |
+| Small Line, Photo Captions | One caption per photo, one per line. |
 | Song URL, Music | Another song from the library, or no music. |
 | Reference | Your own ID, returned as `externalId`. |
 

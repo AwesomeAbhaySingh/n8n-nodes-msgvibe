@@ -20,9 +20,9 @@ function addMusic(body: IDataObject, extra: IDataObject) {
 }
 
 /** The request body for a photo reel: photos cut on the beat of a trending song, with a few words. */
-function reelBody(photos: string[], style: string, hook: string, extra: IDataObject): IDataObject {
+function reelBody(photos: string[], style: string, extra: IDataObject): IDataObject {
 	const reel: IDataObject = { style, photos };
-	if (hook) reel.hook = hook;
+	if (text(extra.hook)) reel.hook = text(extra.hook);
 	if (text(extra.smallLine)) reel.sub = text(extra.smallLine);
 	const lines = text(extra.photoCaptions)
 		.split(/\r?\n/)
@@ -473,20 +473,6 @@ export class MsgVibe implements INodeType {
 				},
 			},
 			{
-				displayName: 'Opening Words',
-				name: 'hook',
-				type: 'string',
-				default: '',
-				placeholder: 'e.g. Goa in 4 days',
-				description: 'The big words at the start, up to 48 characters',
-				displayOptions: {
-					show: {
-						resource: ['video'],
-						operation: ['createReel'],
-					},
-				},
-			},
-			{
 				displayName: 'Additional Fields',
 				name: 'reelFields',
 				type: 'collection',
@@ -505,6 +491,14 @@ export class MsgVibe implements INodeType {
 						type: 'boolean',
 						default: true,
 						description: 'Whether the reel plays music. Turn off for a silent reel.',
+					},
+					{
+						displayName: 'Opening Words',
+						name: 'hook',
+						type: 'string',
+						default: '',
+						placeholder: 'e.g. Goa in 4 days',
+						description: 'The big words at the start, up to 48 characters',
 					},
 					{
 						displayName: 'Photo Captions',
@@ -678,7 +672,6 @@ export class MsgVibe implements INodeType {
 					const body = reelBody(
 						photos.slice(0, 10),
 						this.getNodeParameter('reelStyle', i) as string,
-						text(this.getNodeParameter('hook', i, '')),
 						this.getNodeParameter('reelFields', i, {}) as IDataObject,
 					);
 					const idempotencyKey = `n8n-${this.getWorkflow().id ?? 'wf'}-${this.getExecutionId() ?? Date.now()}-${i}`;
